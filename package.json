@@ -1,0 +1,40 @@
+{
+  "name": "greedytrip",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "seed:places": "cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/seed-places.ts",
+    "demo:prepare": "cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/prepare-demo.ts",
+    "check": "npm run lint && npm run typecheck && npm run test && npm run build"
+  },
+  "dependencies": {
+    "@moss-dev/moss": "latest",
+    "lucide-react": "^0.468.0",
+    "next": "16.2.10",
+    "openai": "^6.0.0",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "server-only": "^0.0.1",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "cross-env": "^7.0.3",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.10",
+    "tailwindcss": "^4",
+    "tsx": "^4.19.2",
+    "typescript": "^5",
+    "vitest": "^3.0.5"
+  }
+}

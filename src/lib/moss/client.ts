@@ -2,6 +2,7 @@ import "server-only";
 
 import { createHash } from "node:crypto";
 import { MossClient, type SessionIndex } from "@moss-dev/moss";
+import { safeError } from "@/lib/utils";
 
 export const DEFAULT_MOSS_INDEX_NAME = "greedytrip-demo-memory";
 
@@ -192,13 +193,17 @@ async function runCloudCheckpoint(): Promise<void> {
         return;
       }
       if (cloudJobFailed(job.status)) {
-        setMossCloudSyncStatus("failed", job.error ?? "Cloud checkpoint failed", pushed.jobId);
+        setMossCloudSyncStatus(
+          "failed",
+          safeError(job.error ? new Error(job.error) : undefined, "Cloud checkpoint failed"),
+          pushed.jobId,
+        );
         return;
       }
       setMossCloudSyncStatus("submitted", `Cloud checkpoint ${job.status}; completion pending`, pushed.jobId);
     }
   } catch (error) {
-    setMossCloudSyncStatus("failed", error instanceof Error ? error.message : "Cloud checkpoint failed");
+    setMossCloudSyncStatus("failed", safeError(error, "Cloud checkpoint failed"));
   }
 }
 
@@ -227,6 +232,6 @@ export async function mossHealthCheck(): Promise<{ ready: boolean; detail: strin
       detail: `Fixed local session ${session.name} initialized with ${session.docCount} documents and no health-check write`,
     };
   } catch (error) {
-    return { ready: false, detail: error instanceof Error ? error.message : "Moss initialization failed" };
+    return { ready: false, detail: safeError(error, "Moss initialization failed") };
   }
 }

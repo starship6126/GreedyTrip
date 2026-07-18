@@ -34,13 +34,13 @@ The boundaries are deliberate:
 - Bright Data supplies and refreshes nearby public-place records. It expands the action frontier but never ranks it.
 - Moss indexes soft, evolving preference memory locally inside the Node process and retrieves per-candidate evidence before every decision. It never selects a destination.
 - Hard constraints remain structured application state: walking limit, location, excluded IDs, unavailable IDs, visited IDs, and current commitment.
-- OpenAI may map free-form language to structured intent, profile patches, or memory drafts. It never produces numeric utility and never chooses the winner.
+- Gemini may map free-form language to structured intent, profile patches, or memory drafts. It never produces numeric utility and never chooses the winner.
 - Pure GreedyTrip functions filter the frontier, calculate every utility component, apply commitment rules, and select the final action.
 
 ## Request and decision flow
 
 1. **Observe.** `Start trip` creates or loads a browser user ID, requests Wake Lock, starts the interview, and triggers candidate collection without waiting for it.
-2. **Interpret.** `/api/agent/turn` handles obvious commands locally. If configured and needed, OpenAI Responses structured output converts free-form language into an intent, profile patch, and semantic memory drafts.
+2. **Interpret.** `/api/agent/turn` first handles known commands and interview answers locally with no network call. Only an unrecognized or ambiguous utterance uses one bounded Gemini structured-output request. The response is parsed and Zod-validated; quota, timeout, HTTP, JSON, or schema failure immediately falls back to the local result.
 3. **Remember locally.** The server creates or updates a canonical memory document, awaits local `session.addDocs(..., { upsert: true })`, and records the real update duration.
 4. **Build the frontier.** Bright Data discovery, a valid neighborhood cache, or clearly labeled synthetic fixtures supply candidate records.
 5. **Filter.** Known-closed, rejected, unavailable, visited, and beyond-limit candidates are removed before scoring.
@@ -254,7 +254,7 @@ Greedy does not mean selfish or consumption-maximizing. It does not guarantee a 
 
 - Bright Data errors fall back to a valid cache and then clearly labeled synthetic fixture records.
 - Moss session errors retain bounded token-overlap evidence; cloud-checkpoint errors do not block local indexing, retrieval, or reranking.
-- OpenAI errors use deterministic interpretation.
+- Gemini errors use deterministic interpretation. The 2.5-second request gate has no application retry, and Gemini never receives user identity, location, candidates, Moss evidence, or scoring state.
 - Voice, Wake Lock, geolocation, maps, and photos fail independently without blanking the page.
 - Live facts come only from normalized source fields. Unknown hours, price, photos, and ratings remain unknown.
 - Crowd risk and rarity are explicit heuristics, not live crowd, wait-time, or safety claims.

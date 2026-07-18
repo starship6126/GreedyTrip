@@ -17,6 +17,9 @@ export async function POST(request: Request) {
       return NextResponse.json({
         candidates: cache.candidates,
         source: "Cached",
+        cacheSavedAt: cache.savedAt,
+        cacheAgeMinutes: cache.ageMinutes,
+        cacheTtlMinutes: cache.ttlMinutes,
         durationMs,
         candidateCount: cache.candidates.length,
         refreshTrigger: input.trigger,

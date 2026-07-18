@@ -22,6 +22,7 @@ export function buildGreedyExplanation(
   if (context.trigger === "REJECTED") whatChanged = "Your latest feedback changed the memory heuristic and every remaining candidate was rescored.";
   else if (context.trigger === "MOVED_300M") whatChanged = "Your location changed, so accessibility and the feasible frontier were recomputed.";
   else if (context.trigger === "CURRENT_UNAVAILABLE") whatChanged = "The previous move became unavailable, so switching friction was removed and a replacement was required.";
+  else if (context.trigger === "PREFERENCE_UPDATED") whatChanged = "A newly expressed preference was stored in memory, so every feasible candidate was rescored.";
   else if (context.trigger === "MANUAL") whatChanged = "You requested a fresh decision, so the current frontier was recomputed.";
   return { whyThis, whyNow, whatChanged };
 }

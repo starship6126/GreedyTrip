@@ -32,7 +32,28 @@ export function integrationEvent(
 }
 
 export function safeError(error: unknown, fallback: string): string {
-  return error instanceof Error && error.message ? error.message : fallback;
+  const raw = error instanceof Error && error.message ? error.message : fallback;
+  const configuredSecrets = [
+    process.env.MOSS_PROJECT_ID,
+    process.env.MOSS_PROJECT_KEY,
+    process.env.BRIGHTDATA_API_KEY,
+    process.env.GEMINI_API_KEY,
+  ].filter((value): value is string => Boolean(value && value.length >= 6));
+
+  let sanitized = raw;
+  for (const secret of configuredSecrets) {
+    sanitized = sanitized.replaceAll(secret, "[redacted]");
+  }
+
+  sanitized = sanitized
+    .replace(/\bBearer\s+[A-Za-z0-9._~+/=-]{8,}/gi, "Bearer [redacted]")
+    .replace(/\bsk-[A-Za-z0-9_-]{8,}/gi, "[redacted]")
+    .replace(/([?&](?:api[_-]?key|token|secret|key)=)[^&\s]+/gi, "$1[redacted]")
+    .replace(/(["']?(?:api[_-]?key|project[_-]?key|token|secret|password)["']?\s*[:=]\s*["']?)[^\s,"'}]+/gi, "$1[redacted]")
+    .replace(/[\r\n\t]+/g, " ")
+    .trim();
+
+  return (sanitized || fallback).slice(0, 500);
 }
 
 export function tokenize(value: string): Set<string> {

@@ -34,6 +34,7 @@ export function shouldRerank(trigger: RefreshTrigger): boolean {
     "MEAL_WINDOW",
     "CLOSING_WINDOW",
     "POOL_LOW",
+    "PREFERENCE_UPDATED",
     "MANUAL",
   ].includes(trigger);
 }

@@ -35,8 +35,9 @@ import type {
 type Phase = "idle" | "bootstrapping" | "interviewing" | "ready" | "recommending" | "navigating" | "paused" | "error";
 
 type Health = {
-  credentials: { moss: boolean; brightdata: boolean; openai: boolean; googleMapsEmbed: boolean };
-  cache: { available: boolean };
+  credentials: { moss: boolean; brightdata: boolean; gemini: boolean; googleMapsEmbed: boolean };
+  readiness: { moss: string; brightdata: string; gemini: string };
+  cache: { available: boolean; allDemoLocationsReady?: boolean };
 };
 
 type State = {
@@ -407,6 +408,31 @@ export default function Home() {
       }
 
       const interpretation = result.interpretation;
+      const hasPreferenceUpdate = result.memoriesAdded.length > 0 || Object.keys(interpretation.profilePatch).length > 0;
+      if (interpretation.intent === "other" && current.recommendation && hasPreferenceUpdate) {
+        const nextProfile = { ...current.profile, ...interpretation.profilePatch };
+        localStorage.setItem("greedytrip-profile", JSON.stringify(nextProfile));
+        dispatch({ type: "PATCH", patch: { profile: nextProfile, busy: true } });
+        const recomputed = await requestRecommendation({
+          trigger: "PREFERENCE_UPDATED",
+          profile: nextProfile,
+          candidates: current.candidates,
+          location: current.currentLocation,
+          excludedIds: current.excludedIds,
+          unavailableIds: current.unavailableIds,
+          currentCandidateId: current.recommendation.candidate.id,
+          speechPrefix: result.acknowledgement,
+          memoryVersion: nextMemoryVersion,
+          currentCandidateAccepted: current.currentCandidateAccepted,
+          visitedIds: current.visitedIds,
+          recentCategoryHistory: current.recentCategoryHistory,
+        });
+        if (!recomputed?.intervention.speak) {
+          appendAgent(result.acknowledgement);
+          voice.speak(result.acknowledgement, true);
+        }
+        return;
+      }
       if (["show_map", "show_photos"].includes(interpretation.intent)) {
         dispatch({ type: "PATCH", patch: { drawerOpen: true, busy: false, agentLine: result.acknowledgement, presentationStage: 6 } });
         dispatch({ type: "TRANSCRIPT", entry: transcript("agent", result.acknowledgement) });
@@ -422,9 +448,7 @@ export default function Home() {
       }
       if (interpretation.intent === "reject" && current.recommendation) {
         const hasTouristyMemory = result.memoriesAdded.some((memory) => memory.topic === "touristy");
-        const excludedIds = hasTouristyMemory
-          ? current.excludedIds
-          : [...new Set([...current.excludedIds, current.recommendation.candidate.id])];
+        const excludedIds = [...new Set([...current.excludedIds, current.recommendation.candidate.id])];
         const rejectedCategory = current.recommendation.candidate.tags.includes("art") ? "art" : current.recommendation.candidate.tags.includes("food") ? "food" : current.recommendation.candidate.category.toLowerCase();
         const recentCategoryHistory = [...current.recentCategoryHistory, rejectedCategory].slice(-6);
         dispatch({ type: "PATCH", patch: { excludedIds, busy: true, recentCategoryHistory, currentCandidateAccepted: false } });
@@ -569,9 +593,19 @@ export default function Home() {
   }, [simulatedEvent]);
 
   const healthBadges = [
-    { name: "Bright Data", mode: state.candidateSource || (state.health?.credentials.brightdata ? "Ready" : "Fixture") },
-    { name: "Moss", mode: state.mossStatus },
-    { name: "OpenAI", mode: state.interpreterSource === "OpenAI Live" ? "Live" : "Fallback" },
+    {
+      name: "Bright Data",
+      mode: state.phase === "idle"
+        ? (state.health?.cache.allDemoLocationsReady ? "Cached" : state.health?.credentials.brightdata ? "Ready" : "Fixture")
+        : state.candidateSource,
+    },
+    { name: "Moss", mode: state.phase === "idle" ? (state.health?.readiness.moss === "Live-ready" ? "Ready" : "Fallback") : state.mossStatus },
+    {
+      name: "Gemini",
+      mode: state.interpreterSource === "Gemini Live"
+        ? "Live"
+        : state.health?.credentials.gemini ? "Hybrid" : "Local",
+    },
   ];
 
   return (

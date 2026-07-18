@@ -158,7 +158,20 @@ function popularityRiskApplies(query: string): boolean {
 }
 
 function evidenceApplies(topic: string, polarity: -1 | 1, query: string): boolean {
+  // Walking distance is already enforced as structured state. Keeping this
+  // document in Moss is useful memory, but applying a negative semantic score to
+  // every in-range place would double-count the hard constraint.
+  if (topic === "max-walk") return false;
   if (topic === "touristy" && polarity === -1) return popularityRiskApplies(query);
+  if (topic === "crowding" && polarity === -1) return popularityRiskApplies(query) || /crowd|noisy|packed/i.test(query);
+  if (topic === "ambience") return /quiet|calm|lively|social|ambience|atmosphere/i.test(query);
+  // Semantic similarity retrieves candidates; these deterministic fact gates
+  // prevent a plausible-sounding but false explanation (for example, treating a
+  // bookstore as an art match solely because both descriptions mention "places").
+  if (topic === "interest:art") return /\bart\b|gallery|museum|design|creative/i.test(query);
+  if (topic === "interest:hidden") return /hidden|gem|lesser[- ]known|independent|local discovery|neighborhood|unusual/i.test(query);
+  if (topic === "interest:food") return /food|restaurant|cafe|coffee|bakery|eatery|bar\b|pub\b/i.test(query);
+  if (topic === "interest:technology") return /tech|technology|science|digital|interactive|innovation/i.test(query);
   return true;
 }
 

@@ -33,7 +33,8 @@ button:disabled { opacity: .48; cursor: not-allowed; }
 .integration-badges { display: flex; align-items: center; gap: 6px; }
 .integration-badges span { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: rgba(255,255,255,.025); color: #b8c1ba; border-radius: 999px; padding: 7px 10px; font-size: 10px; white-space: nowrap; }
 .integration-badges i { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); box-shadow: 0 0 9px currentColor; }
-.integration-badges .mode-live, .integration-badges .mode-ready, .integration-badges .mode-cached { background: var(--mint); color: var(--mint); }
+.integration-badges .mode-live, .integration-badges .mode-ready, .integration-badges .mode-cached, .integration-badges .mode-hybrid { background: var(--mint); color: var(--mint); }
+.integration-badges .mode-local { background: #78a9ff; color: #78a9ff; }
 .integration-badges .mode-fixture, .integration-badges .mode-fallback { background: var(--amber); color: var(--amber); }
 .icon-text-button { border: 1px solid var(--line); background: transparent; padding: 7px 10px; border-radius: 9px; display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 11px; cursor: pointer; transition: .2s ease; }
 .icon-text-button:hover { color: var(--text); border-color: var(--line-strong); }

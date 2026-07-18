@@ -191,7 +191,20 @@ export function selectGreedyNextMove(
   candidates: CandidateWithEvidence[],
   context: DecisionContext,
 ): { decision: GreedyDecision; ranked: CandidateUtility[] } {
-  const feasible = feasibleCandidateFrontier(candidates, context);
+  // A direct rejection is a hard constraint, not merely a soft preference signal.
+  // Keep this invariant inside the decision engine as well as in UI callers so an
+  // API client can never receive the exact move it just rejected.
+  const explicitlyRejectedCurrent =
+    context.currentCandidateId && (context.trigger === "REJECTED" || context.trigger === "MANUAL")
+      ? context.currentCandidateId
+      : undefined;
+  const decisionContext = explicitlyRejectedCurrent && !context.excludedCandidateIds.includes(explicitlyRejectedCurrent)
+    ? {
+        ...context,
+        excludedCandidateIds: [...context.excludedCandidateIds, explicitlyRejectedCurrent],
+      }
+    : context;
+  const feasible = feasibleCandidateFrontier(candidates, decisionContext);
   if (!feasible.length) throw new Error("No feasible candidates remain in the current frontier");
   const ranked = feasible
     .map(({ candidate, evidence }) => calculateCandidateUtility(candidate, evidence, context))
@@ -201,8 +214,8 @@ export function selectGreedyNextMove(
   const current = context.currentCandidateId
     ? ranked.find((utility) => utility.candidateId === context.currentCandidateId)
     : undefined;
-  const switchingFriction = applySwitchingFriction(context, Boolean(current));
-  const interrupt = shouldInterruptForDecision({ context, current, challenger: frontierBest, switchingFriction });
+  const switchingFriction = applySwitchingFriction(decisionContext, Boolean(current));
+  const interrupt = shouldInterruptForDecision({ context: decisionContext, current, challenger: frontierBest, switchingFriction });
   const selected = !current || interrupt.shouldInterrupt ? frontierBest : current;
   selected.switchingFriction = switchingFriction;
   return {

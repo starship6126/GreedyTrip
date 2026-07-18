@@ -266,6 +266,46 @@ describe("bounded retrieval evidence", () => {
     expect(selected[0].contribution).toBe(-1.5);
   });
 
+  it("gates semantic interest evidence against candidate facts", () => {
+    const artMemory = {
+      id: "art-interest",
+      text: "The user enjoys art and art-focused places.",
+      metadata: { topic: "interest:art", polarity: "1", strength: "2" },
+      score: 0.95,
+    };
+
+    expect(evidenceFromQueryDocuments(
+      [artMemory],
+      "Independent bookstore with a lesser-known local discovery signal.",
+      0,
+    )).toHaveLength(0);
+    expect(evidenceFromQueryDocuments(
+      [artMemory],
+      "Modern art museum and gallery.",
+      0,
+    )).toHaveLength(1);
+  });
+
+  it("does not double-count structured walking limits or unsupported ambience", () => {
+    const documents = [
+      {
+        id: "walk-limit",
+        text: "The user prefers to walk no more than 10 minutes.",
+        metadata: { topic: "max-walk", polarity: "-1", strength: "2" },
+        score: 0.99,
+      },
+      {
+        id: "quiet",
+        text: "The user prefers quiet, calm places.",
+        metadata: { topic: "ambience", polarity: "1", strength: "2" },
+        score: 0.99,
+      },
+    ];
+
+    expect(evidenceFromQueryDocuments(documents, "Art gallery. 7 minutes walking.", 0)).toHaveLength(0);
+    expect(evidenceFromQueryDocuments(documents, "Quiet art gallery. 7 minutes walking.", 0).map((item) => item.memoryId)).toEqual(["quiet"]);
+  });
+
   it("applies tourist feedback to related popularity language without keyword filtering", async () => {
     delete process.env.MOSS_PROJECT_ID;
     delete process.env.MOSS_PROJECT_KEY;

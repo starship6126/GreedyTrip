@@ -12,17 +12,18 @@ export function MapPhotoDrawer({ candidate, open, onClose }: { candidate?: Candi
     : `${candidate.name} ${candidate.address ?? `${candidate.lat},${candidate.lng}`}`;
   const mapsUrl = candidate.googleMapsUrl ?? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(candidate.name)}&query_place_id=${encodeURIComponent(candidate.placeId ?? "")}`;
   const embedKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY;
+  const visiblePhotos = [...new Set(candidate.photoUrls)].filter((url) => !failed.includes(url));
   return (
     <div className="drawer-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       <section className="visual-drawer" role="dialog" aria-modal="true" aria-labelledby="visual-title">
         <div className="drawer-handle" />
         <header><div><span className="eyebrow">Map & photos</span><h2 id="visual-title">{candidate.name}</h2></div><button type="button" onClick={onClose} aria-label="Close map and photos"><X /></button></header>
         <div className="photo-strip">
-          {candidate.photoUrls.filter((url) => !failed.includes(url)).slice(0, 3).map((url, index) => (
+          {visiblePhotos.slice(0, 3).map((url, index) => (
             // eslint-disable-next-line @next/next/no-img-element
             <img key={url} src={url} alt={`${candidate.name} photo ${index + 1}`} loading="lazy" onError={() => setFailed((items) => [...items, url])} />
           ))}
-          {candidate.photoUrls.filter((url) => !failed.includes(url)).length === 0 && <div className="photo-empty"><ImageOff size={34} /><strong>No source photos available</strong><span>We won’t invent one.</span></div>}
+          {visiblePhotos.length === 0 && <div className="photo-empty"><ImageOff size={34} /><strong>No source photos available</strong><span>We won’t invent one.</span></div>}
         </div>
         <div className="map-area">
           {embedKey ? (

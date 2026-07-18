@@ -1,7 +1,9 @@
 import fixtureData from "../src/data/powell-candidates.fixture.json";
 import { collectBrightDataCandidates } from "../src/lib/brightdata/client";
-import { writeCandidateCache } from "../src/lib/brightdata/cache";
+import { readCandidateCache, writeCandidateCache } from "../src/lib/brightdata/cache";
+import { DEMO_LOCATIONS } from "../src/lib/geo";
 import { mossHealthCheck } from "../src/lib/moss/client";
+import { interpretTurn } from "../src/lib/agent/interpreter";
 
 try { process.loadEnvFile(".env.local"); } catch {}
 
@@ -12,7 +14,7 @@ async function main() {
   console.log("\nGreedyTrip demo readiness\n");
   console.log(`Moss credentials: ${configured("MOSS_PROJECT_ID") && configured("MOSS_PROJECT_KEY") ? "configured" : "missing → fallback ready"}`);
   console.log(`Bright Data key: ${configured("BRIGHTDATA_API_KEY") ? "configured" : "missing → fixture ready"}`);
-  console.log(`OpenAI key: ${configured("OPENAI_API_KEY") ? "configured" : "missing → local interpreter ready"}`);
+  console.log(`Gemini key: ${configured("GEMINI_API_KEY") ? "configured → hybrid unknown-utterance fallback ready" : "missing → local interpreter ready"}`);
   console.log(`Google Maps embed key: ${configured("NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY") ? "configured" : "missing → deep link ready"}`);
 
   if (fixtureData.length < 10) throw new Error("Fixture must contain at least ten records");
@@ -21,13 +23,17 @@ async function main() {
   if (configured("BRIGHTDATA_API_KEY") && process.env.GREEDYTRIP_SKIP_LIVE_SEED !== "true") {
     try {
       const candidates = await collectBrightDataCandidates(powell);
-      await writeCandidateCache(powell, candidates);
-      console.log(`Bright Data seed: cached ${candidates.length} live records`);
+      await Promise.all(DEMO_LOCATIONS.map((location) => writeCandidateCache(location, candidates)));
+      console.log(`Bright Data seed: cached ${candidates.length} live records for all ${DEMO_LOCATIONS.length} demo locations`);
     } catch (error) {
       console.log(`Bright Data seed: unavailable, fixture remains active (${error instanceof Error ? error.message : "unknown error"})`);
     }
   } else if (configured("BRIGHTDATA_API_KEY")) {
-    console.log("Bright Data seed: skipped for fast startup; run warm-brightdata.cmd before judging");
+    const caches = await Promise.all(DEMO_LOCATIONS.map((location) => readCandidateCache(location)));
+    const readyCount = caches.filter((cache) => cache !== null).length;
+    console.log(readyCount === DEMO_LOCATIONS.length
+      ? `Bright Data cache: ready for all ${readyCount} demo locations; live seed skipped for fast startup`
+      : `Bright Data cache: ${readyCount}/${DEMO_LOCATIONS.length} demo locations ready; run warm-brightdata.cmd before judging`);
   }
 
   if (configured("MOSS_PROJECT_ID") && configured("MOSS_PROJECT_KEY")) {
@@ -37,7 +43,14 @@ async function main() {
     console.log("Moss session check: skipped; in-memory semantic fallback is ready");
   }
 
-  console.log("\nNext commands:\n  npm run dev\n");
+  if (configured("GEMINI_API_KEY")) {
+    const check = await interpretTurn("I prefer small independent places with an atmospheric feel.");
+    console.log(check.source === "Gemini Live"
+      ? `Gemini interpreter check: ready — ${process.env.GEMINI_MODEL ?? "gemini-3.1-flash-lite"} responded in ${check.durationMs} ms`
+      : "Gemini interpreter check: unavailable — local fallback remains ready; verify the key, model access, and free-tier quota");
+  }
+
+  console.log("\nNext command (Windows):\n  start-demo.cmd\n");
 }
 
 main().catch((error) => {

@@ -93,6 +93,38 @@ describe("one-step greedy decision engine", () => {
     expect(candidates.find((item) => item.id === after.decision.selectedCandidateId)?.tags).toContain("independent");
   });
 
+  it("never returns the current move after an explicit rejection", () => {
+    const withEvidence = candidates.map((candidate) => ({ candidate, evidence: evidenceFor(candidate) }));
+    const initial = selectGreedyNextMove(withEvidence, context());
+    const after = selectGreedyNextMove(
+      withEvidence,
+      context({
+        trigger: "REJECTED",
+        currentCandidateId: initial.decision.selectedCandidateId,
+      }),
+    );
+
+    expect(after.decision.selectedCandidateId).not.toBe(initial.decision.selectedCandidateId);
+    expect(after.ranked.some((item) => item.candidateId === initial.decision.selectedCandidateId)).toBe(false);
+    expect(after.decision.shouldInterrupt).toBe(true);
+  });
+
+  it("reranks a learned preference without forcing the current move out", () => {
+    const withEvidence = candidates.map((candidate) => ({ candidate, evidence: evidenceFor(candidate) }));
+    const initial = selectGreedyNextMove(withEvidence, context());
+    const after = selectGreedyNextMove(
+      withEvidence,
+      context({
+        trigger: "PREFERENCE_UPDATED",
+        currentCandidateId: initial.decision.selectedCandidateId,
+      }),
+    );
+
+    expect(after.ranked.some((item) => item.candidateId === initial.decision.selectedCandidateId)).toBe(true);
+    expect(after.decision.selectedCandidateId).toBe(initial.decision.selectedCandidateId);
+    expect(after.decision.shouldInterrupt).toBe(false);
+  });
+
   it("produces correct before/after rank deltas", () => {
     const initial = selectGreedyNextMove(candidates.map((candidate) => ({ candidate, evidence: evidenceFor(candidate) })), context());
     const before = createDecisionSnapshot(initial.decision, initial.ranked, candidates, context());

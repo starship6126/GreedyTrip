@@ -31,7 +31,7 @@ flowchart LR
 - **Moss** indexes evolving preferences locally during the conversation, retrieves the relevant memories before every decision, and answers, “What does this user value or avoid?”
 - **GreedyTrip** combines those signals with structured constraints, calculates deterministic utility, and selects one next move.
 
-Bright Data does not rank destinations. Moss does not select a destination. OpenAI may interpret language, but it does not score candidates. The final choice always comes from inspectable deterministic code.
+Bright Data does not rank destinations. Moss does not select a destination. Gemini may interpret language, but it does not score candidates. The final choice always comes from inspectable deterministic code.
 
 ## Moss is an in-process semantic runtime
 
@@ -124,7 +124,7 @@ Before and after preference feedback, Decision Snapshots capture ranks, scores, 
 The credential-free fixtures are arranged to demonstrate the algorithm rather than hardcoded dialogue:
 
 1. The interview asks for quiet places, a ten-minute walk, art and hidden gems, and uniqueness.
-2. A credible, nearby, relatively popular art destination becomes the first greedy winner.
+2. A single credible nearby destination becomes the first greedy winner. The deterministic fixture uses a relatively popular art destination; a live Bright Data cache may select a different real place.
 3. “That feels too touristy” adds a strong negative tourist-oriented memory and reranks the entire feasible frontier.
 4. A quieter independent art space becomes the new winner and the real before/after Decision Shift appears.
 5. The first simulated movement changes scores but stays below the intervention threshold, producing intelligent silence.
@@ -138,7 +138,7 @@ Presentation Mode exposes reliable controls for each stage. Every control-genera
 - Next.js 16 App Router, React 19, strict TypeScript, Tailwind CSS 4
 - `@moss-dev/moss` local-first semantic memory
 - Bright Data Google Maps full-info dataset via asynchronous discovery
-- OpenAI Responses API structured interpretation with Zod
+- Gemini API structured interpretation with Zod validation
 - Browser-native Web Speech, Geolocation, Wake Lock, and Google Maps Embed APIs
 - lucide-react, Vitest, and tsx
 - No database, authentication, general-purpose agent framework, booking system, route optimizer, or maintained scraping code
@@ -147,7 +147,18 @@ See [docs/architecture.md](docs/architecture.md) for the request flow, utility m
 
 ## Setup
 
-Requirements: Node.js 20.18 or newer.
+Requirements for a fresh clone: Node.js 20.9 or newer.
+
+On the provided Windows hackathon machine, the dependencies and bundled Node runtime are already available:
+
+```cmd
+start-demo.cmd prepare
+start-demo.cmd
+```
+
+`start-demo.cmd` creates `.env.local` from the example when needed. Run `warm-brightdata.cmd` separately before judging only when you want to refresh the real Bright Data cache; the fixture fallback remains usable if that collection is slow.
+
+For a fresh clone on another machine:
 
 ```bash
 cp .env.example .env.local
@@ -158,7 +169,21 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000), tap **Start trip**, and allow microphone access if desired. Every interaction also has text, button, and Presentation Mode fallbacks.
 
-On the provided Windows hackathon machine, run `warm-brightdata.cmd` once before judging, wait for the cached-record confirmation, then launch with `start-demo.cmd`. Startup skips a new live scrape so the UI is immediate; the cache remains explicitly labeled `Cached`.
+Startup skips a new live scrape so the UI is immediate; any existing cache remains explicitly labeled `Cached`.
+
+### Recommended judge configuration
+
+For the lowest-latency judging path, configure Moss and Bright Data and warm the Bright Data cache once. The deterministic local interpreter handles the prepared interview, rejection, movement, unavailable-place, map, and reset commands without a network round trip, even when Gemini is configured. Gemini is used only for unrecognized free-form language; it never ranks or scores a place.
+
+For a more conversational demo, set a free-tier `GEMINI_API_KEY`. GreedyTrip remains local-first: known interview answers and operational commands never call Gemini, while only an unrecognized utterance uses one bounded structured-output request to `gemini-3.1-flash-lite`. `GEMINI_INTERPRETER_TIMEOUT_MS` defaults to 2500 ms, the application never retries, and any quota, timeout, malformed response, or API failure immediately returns the local fallback result. The header distinguishes `Gemini · Hybrid` from an actual `Gemini · Live` turn.
+
+```cmd
+start-demo.cmd prepare
+warm-brightdata.cmd
+start-demo.cmd
+```
+
+The readiness screen should report **Moss configured**, **Bright Data configured**, and either **Gemini configured → hybrid fallback ready** or **Gemini missing → local interpreter ready**. Never commit `.env.local`, paste credentials into issue text, or include `.cache`, `.next`, `node_modules`, or judge logs in a public upload; the repository ignore rules exclude all of them.
 
 ## Environment variables
 
@@ -170,16 +195,17 @@ On the provided Windows hackathon machine, run `warm-brightdata.cmd` once before
 | `MOSS_SYNC_POLL_MS`, `MOSS_SYNC_MAX_POLLS` | Cloud checkpoint completion polling controls | No |
 | `BRIGHTDATA_API_KEY` | Live nearby Google Maps discovery | No; cache or synthetic fixture |
 | `BRIGHTDATA_GOOGLE_MAPS_DATASET_ID` | Bright Data dataset override | No |
-| `OPENAI_API_KEY` | Free-form structured interpretation | No; local deterministic interpreter |
-| `OPENAI_MODEL` | Responses API model override | No |
+| `GEMINI_API_KEY` | Free-form structured interpretation | No; local deterministic interpreter |
+| `GEMINI_MODEL` | Gemini model override; defaults to `gemini-3.1-flash-lite` | No |
+| `GEMINI_INTERPRETER_TIMEOUT_MS` | Unknown-utterance latency ceiling; defaults to 2500 ms | No |
 | `NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY` | Browser-safe map iframe key | No; coordinates and deep link |
 | `NEXT_PUBLIC_AGENT_LANGUAGE` | Recognition and synthesis locale | No; `en-US` |
 | `GREEDYTRIP_DEMO_MODE` | Enables demo-oriented defaults | No |
 | `GREEDYTRIP_PERSIST_MEMORY` | Allows background Moss `pushIndex()` | No |
-| `GREEDYTRIP_BRIGHTDATA_CACHE_TTL_MINUTES` | Candidate cache lifetime | No; 30 minutes |
+| `GREEDYTRIP_BRIGHTDATA_CACHE_TTL_MINUTES` | Candidate cache lifetime | No; 24 hours for judge readiness |
 | `GREEDYTRIP_BRIGHTDATA_WARMUP_TIMEOUT_MS` | Maximum pre-demo live collection wait | No; 15 minutes |
 
-Only the Google Maps embed key is browser-visible. Moss, Bright Data, and OpenAI credentials stay in server-only routes and are never logged.
+Only the Google Maps embed key is browser-visible. Moss, Bright Data, and Gemini credentials stay in server-only routes and are never logged. Free-tier Gemini inputs may be used by Google to improve its products, so GreedyTrip sends only the short utterance plus the interview step—not identity, location, candidates, or Moss evidence.
 
 ## Commands
 
@@ -200,7 +226,7 @@ npm run check          # lint + typecheck + tests + production build
 |---|---|---|
 | Bright Data | Async Google Maps discovery | Valid neighborhood cache, then 10 clearly labeled synthetic records |
 | Moss | In-process `SessionIndex` retrieval + optional serialized cloud checkpoint | In-memory token-overlap evidence using the same bounded evidence shape |
-| OpenAI | Responses API structured interpretation | Deterministic command/interview keyword interpreter |
+| Gemini | Free-tier structured interpretation for unknown utterances | Deterministic command/interview keyword interpreter |
 | Voice | Web Speech recognition and synthesis | Text field and visible action/answer buttons |
 | Map | Google Maps Embed iframe | Coordinate preview and Google Maps deep link |
 | Location | Browser geolocation | Powell Street / Yerba Buena / Union Square simulator |

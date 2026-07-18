@@ -22,6 +22,7 @@ describe("event-driven refresh policy", () => {
 
   it("always reranks after rejection", () => {
     expect(shouldRerank("REJECTED")).toBe(true);
+    expect(shouldRerank("PREFERENCE_UPDATED")).toBe(true);
   });
 
   it("does not call Bright Data for rejection while the pool is healthy", () => {

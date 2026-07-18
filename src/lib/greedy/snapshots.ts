@@ -23,7 +23,9 @@ export function createDecisionSnapshot(
     memoryVersion: context.memoryVersion,
     selectedCandidateId: decision.selectedCandidateId,
     selectedScore: decision.selectedUtility.total,
-    rankedCandidates: ranked.slice(0, 5).map((utility) => ({
+    // Keep the full demo frontier for evidence-impact auditing. Normal users and
+    // Judge View still render only the explicitly chosen top slices.
+    rankedCandidates: ranked.slice(0, 10).map((utility) => ({
       candidateId: utility.candidateId,
       name: byId.get(utility.candidateId)?.name ?? utility.candidateId,
       category: byId.get(utility.candidateId)?.category ?? "Unknown",

@@ -37,7 +37,7 @@ export async function POST(request: Request) {
         cloudSyncStatus: runtimeMetrics.cloudSync.status,
       },
       integrationEvents: [
-        integrationEvent("openai", "interpret utterance", result.source === "OpenAI Live" ? "Live" : "Fallback", result.source, result.durationMs),
+        integrationEvent("gemini", "interpret utterance", result.source === "Gemini Live" ? "Live" : "Local fast path", result.source === "Gemini Live" ? result.source : "No network call", result.durationMs),
         integrationEvent("moss", "local addDocs", moss.mode, moss.detail, moss.localUpdateDurationMs ?? mossDuration),
       ],
     });

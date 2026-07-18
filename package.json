@@ -2,6 +2,9 @@
   "name": "greedytrip",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20.9.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -18,7 +21,6 @@
     "@moss-dev/moss": "latest",
     "lucide-react": "^0.468.0",
     "next": "16.2.10",
-    "openai": "^6.0.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "server-only": "^0.0.1",

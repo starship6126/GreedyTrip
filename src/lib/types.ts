@@ -194,7 +194,7 @@ export type CandidateDecisionDelta = {
 export type IntegrationEvent = {
   id: string;
   timestamp: string;
-  system: "brightdata" | "moss" | "openai" | "agent";
+  system: "brightdata" | "moss" | "gemini" | "agent";
   action: string;
   status: string;
   durationMs?: number;
@@ -209,6 +209,7 @@ export type RefreshTrigger =
   | "MEAL_WINDOW"
   | "CLOSING_WINDOW"
   | "POOL_LOW"
+  | "PREFERENCE_UPDATED"
   | "MANUAL";
 
 export type TurnIntent =

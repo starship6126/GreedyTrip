@@ -131,7 +131,9 @@ export function useVoiceAgent(onFinalTranscript: (transcript: string) => void | 
   }, [startRecognition]);
 
   const setThinking = useCallback((thinking: boolean) => {
-    setStatus(thinking ? "thinking" : activeRef.current ? "idle" : "paused");
+    // Finishing a silent recompute means the agent is ready, not user-paused.
+    // The explicit pause() path still owns the paused state.
+    setStatus(thinking ? "thinking" : "idle");
   }, []);
 
   return {

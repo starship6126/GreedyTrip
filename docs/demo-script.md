@@ -2,7 +2,7 @@
 
 ## Before going on stage
 
-1. Run `npm run demo:prepare`, then `npm run dev`.
+1. On the Windows demo machine, run `start-demo.cmd prepare`, then `start-demo.cmd`.
 2. Open the app and Presentation/Judge mode.
 3. Press **Reset Demo** so the stage indicator is at **1. Interview**.
 4. Confirm the integration badges honestly say Live, Cached, Fixture, or Fallback, and Moss shows separate Local Index, Retrieval, and Cloud Sync states.
@@ -47,7 +47,7 @@ If credentials are absent, explicitly say that the badge shows the deterministic
 
 ### 0:50–1:15 — First greedy commit
 
-Show the single active recommendation and the COMMIT step. The fixture should naturally choose the nearby, credible, relatively popular art candidate.
+Show the single active recommendation and the COMMIT step. The deterministic fixture chooses the nearby, credible, relatively popular art candidate. A current Bright Data cache can produce a different real winner; always describe the candidate and evidence actually visible on screen.
 
 Say:
 
@@ -80,11 +80,12 @@ Show the LEARN and RECOMPUTE steps, then Decision Shift:
 - retrieved memory text, similarity, polarity, strength, and resulting Memory Fit delta;
 - the real ranking after feedback;
 - candidate score and rank deltas;
+- the largest semantic penalty, which proves that the touristy Moss memory affected a popularity-risk candidate even when the rejected live winner itself was not popularity-tagged;
 - the quieter independent art winner.
 
 Say:
 
-> This was not a filter menu. One sentence changed the user heuristic, and every candidate was re-evaluated.
+> This was not only a different-result button. The rejected move became infeasible, the sentence was also stored as preference memory, and every remaining candidate was re-evaluated. The panel shows the largest semantic penalty separately.
 
 Then:
 

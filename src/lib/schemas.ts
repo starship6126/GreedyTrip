@@ -70,6 +70,7 @@ export const refreshTriggerSchema = z.enum([
   "MEAL_WINDOW",
   "CLOSING_WINDOW",
   "POOL_LOW",
+  "PREFERENCE_UPDATED",
   "MANUAL",
 ]);
 

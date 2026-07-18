@@ -158,6 +158,8 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000), tap **Start trip**, and allow microphone access if desired. Every interaction also has text, button, and Presentation Mode fallbacks.
 
+On the provided Windows hackathon machine, run `warm-brightdata.cmd` once before judging, wait for the cached-record confirmation, then launch with `start-demo.cmd`. Startup skips a new live scrape so the UI is immediate; the cache remains explicitly labeled `Cached`.
+
 ## Environment variables
 
 | Variable | Purpose | Required? |
@@ -175,6 +177,7 @@ Open [http://localhost:3000](http://localhost:3000), tap **Start trip**, and all
 | `GREEDYTRIP_DEMO_MODE` | Enables demo-oriented defaults | No |
 | `GREEDYTRIP_PERSIST_MEMORY` | Allows background Moss `pushIndex()` | No |
 | `GREEDYTRIP_BRIGHTDATA_CACHE_TTL_MINUTES` | Candidate cache lifetime | No; 30 minutes |
+| `GREEDYTRIP_BRIGHTDATA_WARMUP_TIMEOUT_MS` | Maximum pre-demo live collection wait | No; 15 minutes |
 
 Only the Google Maps embed key is browser-visible. Moss, Bright Data, and OpenAI credentials stay in server-only routes and are never logged.
 

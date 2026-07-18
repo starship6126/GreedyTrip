@@ -18,7 +18,7 @@ async function main() {
   if (fixtureData.length < 10) throw new Error("Fixture must contain at least ten records");
   console.log(`Fixture validation: ${fixtureData.length} synthetic demo records available`);
 
-  if (configured("BRIGHTDATA_API_KEY")) {
+  if (configured("BRIGHTDATA_API_KEY") && process.env.GREEDYTRIP_SKIP_LIVE_SEED !== "true") {
     try {
       const candidates = await collectBrightDataCandidates(powell);
       await writeCandidateCache(powell, candidates);
@@ -26,6 +26,8 @@ async function main() {
     } catch (error) {
       console.log(`Bright Data seed: unavailable, fixture remains active (${error instanceof Error ? error.message : "unknown error"})`);
     }
+  } else if (configured("BRIGHTDATA_API_KEY")) {
+    console.log("Bright Data seed: skipped for fast startup; run warm-brightdata.cmd before judging");
   }
 
   if (configured("MOSS_PROJECT_ID") && configured("MOSS_PROJECT_KEY")) {

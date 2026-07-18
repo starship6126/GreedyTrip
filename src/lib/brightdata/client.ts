@@ -24,7 +24,10 @@ async function apiFetch(url: string, init: RequestInit, timeoutMs: number): Prom
   }
 }
 
-export async function collectBrightDataCandidates(location: GeoPoint): Promise<Candidate[]> {
+export async function collectBrightDataCandidates(
+  location: GeoPoint,
+  options: { timeoutMs?: number } = {},
+): Promise<Candidate[]> {
   const apiKey = process.env.BRIGHTDATA_API_KEY;
   if (!apiKey) throw new Error("Bright Data credentials are not configured");
   const datasetId = process.env.BRIGHTDATA_GOOGLE_MAPS_DATASET_ID ?? "gd_m8ebnr0q2qlklc02fz";
@@ -48,7 +51,8 @@ export async function collectBrightDataCandidates(location: GeoPoint): Promise<C
   }
 
   const startedAt = Date.now();
-  while (Date.now() - startedAt < 90_000) {
+  const timeoutMs = options.timeoutMs ?? 90_000;
+  while (Date.now() - startedAt < timeoutMs) {
     const progressResponse = await apiFetch(`${API_ROOT}/progress/${encodeURIComponent(trigger.snapshot_id)}`, { headers }, 12_000);
     const progress = (await progressResponse.json()) as { status?: unknown };
     const status = typeof progress.status === "string" ? progress.status.toLowerCase() : "unknown";
@@ -66,5 +70,5 @@ export async function collectBrightDataCandidates(location: GeoPoint): Promise<C
     }
     await new Promise((resolve) => setTimeout(resolve, 5_000));
   }
-  throw new Error("Bright Data collection timed out after 90 seconds");
+  throw new Error(`Bright Data collection timed out after ${Math.round(timeoutMs / 1_000)} seconds`);
 }
